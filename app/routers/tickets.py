@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Ticket
-from app.services.tickets import generar_session_token
+from config import SESSION_KEY
 
 router = APIRouter(prefix="/api/tickets", tags=["Tickets"])
 
@@ -13,8 +13,7 @@ class TicketSessionRequest(BaseModel):
 
 class TicketSessionResponse(BaseModel):
     ticketId: str
-    sessionToken: str
-    expiresAt: str
+    sessionKey: str
 
 @router.post("/session", response_model=TicketSessionResponse)
 def crear_ticket_session(req: TicketSessionRequest, db: Session = Depends(get_db)):
@@ -28,10 +27,7 @@ def crear_ticket_session(req: TicketSessionRequest, db: Session = Depends(get_db
     if ticket.status != "ACTIVE":
         raise HTTPException(status_code=401, detail="Ticket no está activo")
 
-    session_token, exp_time = generar_session_token(ticket.id)
-
     return {
         "ticketId": ticket.id,
-        "sessionToken": session_token,
-        "expiresAt": exp_time.isoformat().replace("+00:00", "Z"),
+        "sessionKey": SESSION_KEY,
     }

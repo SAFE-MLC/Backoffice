@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.database import get_db, redis_client
+import json
 
 router = APIRouter(prefix="/internal", tags=["internal"])
 
@@ -31,7 +32,11 @@ def warmup(eventId: str, db: Session = Depends(get_db)):
                 "entitlements": row["entitlements"],
                 "eventId": eventId
             }
-            redis_client.set(f"ticket:{row['id']}", str(ticket_data), ex=3600) 
+            redis_client.set(
+                f"ticket:{row['id']}",
+                json.dumps(ticket_data),
+                ex=3600  # TTL en segundos
+            )
 
         # ------------------------
         # Checkpoints
@@ -50,9 +55,18 @@ def warmup(eventId: str, db: Session = Depends(get_db)):
                 "zoneName": zc["zone_name"],
                 "eventId": eventId
             }
-            redis_client.set(f"checkpoint:{zc['id']}", str(checkpoint_data), ex=3600)
+            redis_client.set(
+                f"checkpoint:{zc['id']}",
+                json.dumps(checkpoint_data),
+                ex=3600
+            )
 
-        return {"status": "ok", "eventId": eventId}
+        return {
+            "status": "ok",
+            "eventId": eventId,
+            "ticketsLoaded": len(rows),
+            "checkpointsLoaded": len(zc_rows)
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
