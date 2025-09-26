@@ -24,9 +24,6 @@ def crear_ticket_session(req: TicketSessionRequest, db: Session = Depends(get_db
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket no encontrado")
 
-    if ticket.status != "ACTIVE":
-        raise HTTPException(status_code=401, detail="Ticket no está activo")
-
     return {
         "ticketId": ticket.id,
         "sessionKey": SESSION_KEY,
