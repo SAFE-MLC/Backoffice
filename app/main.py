@@ -27,7 +27,8 @@ app = FastAPI(title="Backoffice")
 
 app.include_router(staff.router)
 app.include_router(tickets.router)
-app.include_router(warmup.router)
+app.include_router(warmup.router_api)
+app.include_router(warmup.router_internal)
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
